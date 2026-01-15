@@ -1,5 +1,6 @@
 from flask import Flask, request, render_template_string
-import random
+from PIL import Image
+import os
 
 app = Flask(__name__)
 
@@ -73,9 +74,6 @@ nav a {
     margin-bottom: 30px;
     text-align: center;
 }
-.card h3 {
-    margin-bottom: 10px;
-}
 .steps {
     border-left: 4px solid #0b5cff;
     padding-left: 20px;
@@ -85,9 +83,6 @@ nav a {
     padding: 30px;
     border-radius: 20px;
     text-align: center;
-}
-input[type=file] {
-    margin-top: 15px;
 }
 .result {
     margin-top: 20px;
@@ -115,30 +110,17 @@ footer {
 <div class="hero">
     <h1>Trust what’s real, spot the fakes.</h1>
     <p>
-        Smart AI-generated images need an even smarter AI Image Checker.
-        Upload an image and detect whether it is AI-generated or real.
+        Upload an image and analyze whether it is AI-generated or real.
     </p>
     <a href="#detect"><button class="btn">Detect an Image</button></a>
-</div>
-
-<div class="section">
-    <div class="card">
-        <h3>Completely Free</h3>
-        <p>This AI Image Detector is 100% free and easy to use.</p>
-    </div>
-
-    <div class="card">
-        <h3>High Accuracy</h3>
-        <p>Uses AI-based pattern analysis to identify AI-generated images.</p>
-    </div>
 </div>
 
 <div class="section" id="how">
     <h2>How It Works</h2>
     <div class="steps">
-        <p><b>1.</b> Upload the image you want to analyze</p>
-        <p><b>2.</b> The system scans image patterns</p>
-        <p><b>3.</b> View AI or Real detection result</p>
+        <p><b>1.</b> Upload an image</p>
+        <p><b>2.</b> System analyzes image properties</p>
+        <p><b>3.</b> Displays AI or Real result</p>
     </div>
 </div>
 
@@ -146,10 +128,8 @@ footer {
     <div class="detect-box">
         <h2>AI Image Detector</h2>
         <form method="POST" enctype="multipart/form-data">
-            <input type="file" name="image" required><br>
-            <button class="btn" onclick="this.innerText='Analyzing...'">
-                Analyze Image
-            </button>
+            <input type="file" name="image" required><br><br>
+            <button class="btn">Analyze Image</button>
         </form>
 
         {% if result %}
@@ -175,8 +155,21 @@ def home():
     confidence = None
 
     if request.method == "POST":
-        result = random.choice(["AI Generated Image", "Real Image"])
-        confidence = random.randint(75, 99)
+        file = request.files.get("image")
+        if file:
+            img = Image.open(file)
+            width, height = img.size
+
+            file.seek(0, os.SEEK_END)
+            size_kb = file.tell() / 1024
+
+            # Simple logical detection (NOT random)
+            if width >= 1024 and size_kb < 300:
+                result = "AI Generated Image"
+                confidence = 85
+            else:
+                result = "Real Image"
+                confidence = 80
 
     return render_template_string(
         HTML,
@@ -186,4 +179,3 @@ def home():
 
 if __name__ == "__main__":
     app.run()
-
